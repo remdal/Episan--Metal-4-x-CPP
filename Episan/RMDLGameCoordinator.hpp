@@ -19,8 +19,18 @@
 #include <string>
 #include <unordered_map>
 
-constexpr uint8_t MaxFramesInFlight = 3;
+#include "RMDLMainRenderer_shared.h"
+#include "RMDLUtils.hpp"
+
+#define kMaxBuffersInFlight 3
 static const uint32_t NumLights = 256;
+
+typedef struct TriangleData
+{
+    VertexData vertex0;
+    VertexData vertex1;
+    VertexData vertex2;
+} TriangleData;
 
 class GameCoordinator
 {
@@ -79,10 +89,37 @@ public:
     
     void setupPipelineCamera();
     
-    
+    //MTL::Buffer** buildTriangleDataBuffer(NS::UInteger count);
+    void makeArgumentTable();
+    void makeResidencySet();
+    void compileRenderPipeline( MTL::PixelFormat, const std::string& );
+
 private:
 
     MTL::PixelFormat                    _layerPixelFormat;
+    MTL4::CommandQueue*                 _pCommandQueue;
+    MTL4::CommandBuffer*                _pCommandBuffer;
+    MTL4::CommandAllocator*             _pCommandAllocator[kMaxBuffersInFlight];
+    MTL4::ArgumentTable*                _pArgumentTable;
+    MTL::ResidencySet*                  _pResidencySet;
+    MTL::SharedEvent*                   _sharedEvent;
+    dispatch_semaphore_t                _semaphore;
+    MTL::Buffer*                        _pInstanceDataBuffer[kMaxBuffersInFlight];
+    MTL::Buffer*                        _pTriangleDataBuffer[kMaxBuffersInFlight];
+    MTL::Buffer*                        _pViewportSizeBuffer;
+    MTL::Device*                        _pDevice;
+    MTL::RenderPipelineState*           _pPSO;
+    MTL::DepthStencilState*             _pDepthStencilState;
+    MTL::Texture*                       _pTexture;
+    uint8_t                             _uniformBufferIndex;
+    uint64_t                            _currentFrameIndex;
+    simd_uint2                          _pViewportSize;
+    MTL::Library*                       _pShaderLibrary;
+    int                                 _frameNumber;
+    
+    simd::float4x4 _presentOrtho;
+    
+    
     MTL::Buffer*                        _pUniformBuffer;
     
     NS::SharedPtr<MTL::Texture>         _pBackbuffer;
@@ -90,13 +127,12 @@ private:
     NS::SharedPtr<MTL::Texture>         _pBackbufferAdapter;
     NS::SharedPtr<MTL::Texture>         _pUpscaledbufferAdapter;
 
-    float          _maxEDRValue;
-    float          _brightness;
-    float          _edrBias;
-    simd::float4x4 _presentOrtho;
 
     int            _highScore;
     int            _prevScore;
+    float          _maxEDRValue;
+    float          _brightness;
+    float          _edrBias;
     
     NS::SharedPtr<MTL::SharedEvent>     _pPacingEvent;
     uint64_t                            _pacingTimeStampIndex;
@@ -110,26 +146,22 @@ private:
 
     std::unordered_map<std::string, NS::SharedPtr<MTL::Texture>> _textureAssets;
 
-    int _frame;
-
     /* P */
-    MTL::Device*                        _pDevice;
-    MTL::CommandQueue*                  _pCommandQueue;
-    MTL::Library*                       _pShaderLibrary;
-    MTL::RenderPipelineState*           _pPSO;
+
+    
     MTL::RenderPipelineState*           _pMapPSO;
     MTL::RenderPipelineState*           _pCameraPSO;
     MTL::ComputePipelineState*          _pComputePSO;
-    MTL::DepthStencilState*             _pDepthStencilState;
-    MTL::Texture*                       _pTexture;
+    
+    
     MTL::Buffer*                        _pVertexDataBuffer;
-    //MTL::Buffer*                _pInstanceDataBuffer[kMaxFramesInFlight];
+    //
     //MTL::Buffer*                _pCameraDataBuffer[kMaxFramesInFlight];
     MTL::Buffer*                _pIndexBuffer;
     MTL::Buffer*                _pTextureAnimationBuffer;
     float                       _angle;
     int                         _frameP;
-    dispatch_semaphore_t        _semaphore;
+    
     uint                        _animationIndex;
     NS::SharedPtr<MTL::Texture>         _pUpscaledbufferAdapterP;
     MTL::Buffer* _pVertexDataBufferMap;

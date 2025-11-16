@@ -6,14 +6,40 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		7531E02B2EC889FC008D177C /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7531E02A2EC889FC008D177C /* QuartzCore.framework */; };
+		7531E02D2EC889FF008D177C /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7531E02C2EC889FF008D177C /* Metal.framework */; };
+		7531E02F2EC88A03008D177C /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7531E02E2EC88A03008D177C /* MetalKit.framework */; };
+		7531E0312EC88A07008D177C /* MetalFX.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7531E0302EC88A07008D177C /* MetalFX.framework */; };
+		7531E0332EC88A0B008D177C /* ModelIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7531E0322EC88A0B008D177C /* ModelIO.framework */; };
+		7531E0352EC88A0F008D177C /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7531E0342EC88A0F008D177C /* Foundation.framework */; };
+		7531E0372EC88A20008D177C /* PHASE.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7531E0362EC88A20008D177C /* PHASE.framework */; };
+		7531E0392EC88A24008D177C /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7531E0382EC88A24008D177C /* GameController.framework */; };
+		7531E05E2EC8DD02008D177C /* AVFAudio.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7531E05D2EC8DD02008D177C /* AVFAudio.framework */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		7531DF5D2EC8892C008D177C /* Episan.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Episan.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7531E02A2EC889FC008D177C /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		7531E02C2EC889FF008D177C /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		7531E02E2EC88A03008D177C /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
+		7531E0302EC88A07008D177C /* MetalFX.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalFX.framework; path = System/Library/Frameworks/MetalFX.framework; sourceTree = SDKROOT; };
+		7531E0322EC88A0B008D177C /* ModelIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ModelIO.framework; path = System/Library/Frameworks/ModelIO.framework; sourceTree = SDKROOT; };
+		7531E0342EC88A0F008D177C /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		7531E0362EC88A20008D177C /* PHASE.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PHASE.framework; path = System/Library/Frameworks/PHASE.framework; sourceTree = SDKROOT; };
+		7531E0382EC88A24008D177C /* GameController.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GameController.framework; path = System/Library/Frameworks/GameController.framework; sourceTree = SDKROOT; };
+		7531E05D2EC8DD02008D177C /* AVFAudio.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFAudio.framework; path = System/Library/Frameworks/AVFAudio.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		7531DF5F2EC8892C008D177C /* Episan */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Episan;
+			sourceTree = "<group>";
+		};
+		7531E0202EC88981008D177C /* include */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = include;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -23,6 +49,15 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7531E05E2EC8DD02008D177C /* AVFAudio.framework in Frameworks */,
+				7531E0392EC88A24008D177C /* GameController.framework in Frameworks */,
+				7531E0372EC88A20008D177C /* PHASE.framework in Frameworks */,
+				7531E0352EC88A0F008D177C /* Foundation.framework in Frameworks */,
+				7531E0332EC88A0B008D177C /* ModelIO.framework in Frameworks */,
+				7531E0312EC88A07008D177C /* MetalFX.framework in Frameworks */,
+				7531E02F2EC88A03008D177C /* MetalKit.framework in Frameworks */,
+				7531E02D2EC889FF008D177C /* Metal.framework in Frameworks */,
+				7531E02B2EC889FC008D177C /* QuartzCore.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -32,7 +67,9 @@
 		7531DF542EC8892C008D177C = {
 			isa = PBXGroup;
 			children = (
+				7531E0202EC88981008D177C /* include */,
 				7531DF5F2EC8892C008D177C /* Episan */,
+				7531E0292EC889FC008D177C /* Frameworks */,
 				7531DF5E2EC8892C008D177C /* Products */,
 			);
 			sourceTree = "<group>";
@@ -43,6 +80,22 @@
 				7531DF5D2EC8892C008D177C /* Episan.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		7531E0292EC889FC008D177C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				7531E05D2EC8DD02008D177C /* AVFAudio.framework */,
+				7531E0382EC88A24008D177C /* GameController.framework */,
+				7531E0362EC88A20008D177C /* PHASE.framework */,
+				7531E0342EC88A0F008D177C /* Foundation.framework */,
+				7531E0322EC88A0B008D177C /* ModelIO.framework */,
+				7531E0302EC88A07008D177C /* MetalFX.framework */,
+				7531E02E2EC88A03008D177C /* MetalKit.framework */,
+				7531E02C2EC889FF008D177C /* Metal.framework */,
+				7531E02A2EC889FC008D177C /* QuartzCore.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -62,6 +115,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				7531DF5F2EC8892C008D177C /* Episan */,
+				7531E0202EC88981008D177C /* include */,
 			);
 			name = Episan;
 			packageProductDependencies = (
@@ -246,6 +300,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -254,8 +310,9 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "include/**";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSMainStoryboardFile = Main;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -268,6 +325,7 @@
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_INTEROP_MODE = objcxx;
 			};
 			name = Debug;
 		};
@@ -276,6 +334,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -284,8 +344,9 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "include/**";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSMainStoryboardFile = Main;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -298,6 +359,7 @@
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_INTEROP_MODE = objcxx;
 			};
 			name = Release;
 		};

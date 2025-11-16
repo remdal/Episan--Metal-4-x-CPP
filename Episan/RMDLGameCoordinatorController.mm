@@ -97,20 +97,6 @@ static void* renderWorker( void* _Nullable obj )
     _pGameCoordinator->setEDRBias(edrBias);
 }
 
-- (void)saveHighScore
-{
-    NSString* saveFilePath = [NSTemporaryDirectory() stringByAppendingString:@"/hiscore.txt"];
-    NSString* hiScoreTxt = [NSString stringWithFormat:@"%d", _pGameCoordinator->highScore()];
-    NSError* __autoreleasing fileError = nil;
-    bool success = [hiScoreTxt writeToURL:[NSURL fileURLWithPath:saveFilePath] atomically:NO encoding:NSUTF8StringEncoding error:&fileError];
-    if (!success)
-    {
-        NSLog(@"Error writing temporary hi-score file: %@", fileError.localizedDescription);
-        assert(false);
-    }
-    NSLog(@"Saved high score of: %@", hiScoreTxt);
-}
-
 - (void)moveCameraX:(float)x Y:(float)y Z:(float)z
 {
     _pGameCoordinator->moveCamera( simd::float3{x, y, z} );

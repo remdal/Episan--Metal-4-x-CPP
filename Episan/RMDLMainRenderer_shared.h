@@ -11,39 +11,106 @@
 #ifndef ShaderTypes_h
 #define ShaderTypes_h
 
-#ifdef __METAL_VERSION__
-#define NS_ENUM(_type, _name) enum _name : _type _name; enum _name : _type
-typedef metal::int32_t EnumBackingType;
-#else
-#import <Foundation/Foundation.h>
-typedef NSInteger EnumBackingType;
-#endif
-
 #include <simd/simd.h>
 
-typedef NS_ENUM(EnumBackingType, BufferIndex)
+struct RMDLCameraUniforms
 {
-    BufferIndexMeshPositions = 0,
-    BufferIndexMeshGenerics  = 1,
-    BufferIndexUniforms      = 2
+    simd::float4x4      viewMatrix;
+    simd::float4x4      projectionMatrix;
+    simd::float4x4      viewProjectionMatrix;
+    simd::float4x4      invOrientationProjectionMatrix;
+    simd::float4x4      invViewProjectionMatrix;
+    simd::float4x4      invProjectionMatrix;
+    simd::float4x4      invViewMatrix;
+    simd::float4        frustumPlanes[6];
 };
 
-typedef NS_ENUM(EnumBackingType, VertexAttribute)
+struct RMDLUniforms
+{
+    RMDLCameraUniforms  cameraUniforms;
+    RMDLCameraUniforms  shadowCameraUniforms[3];
+
+    // Mouse state: x, y = position in pixels; z = buttons
+    simd::float3        mouseState;
+    simd::float2        invScreenSize;
+    float               projectionYScale;
+    float               brushSize;
+
+    float               ambientOcclusionContrast;
+    float               ambientOcclusionScale;
+    float               ambientLightScale;
+#if !USE_CONST_GAME_TIME
+    float               gameTime;
+#endif
+    float               frameTime;  // TODO. this doesn't appear to be initialized until UpdateCpuUniforms. OK?
+};
+
+struct Plane
+{
+    simd::float3        normal = { 0.f, 1.f, 0.f };
+    float               distance = 0.f;
+};
+
+struct Frustum
+{
+    Plane               topFace;
+    Plane               bottomFace;
+    Plane               rightFace;
+    Plane               leftFace;
+    Plane               farFace;
+    Plane               nearFace;
+};
+
+struct RMDLObjVertex
+{
+    simd::float3    position;
+    simd::float3    normal;
+    simd::float3    color;
+};
+
+typedef enum VertexAttributes
 {
     VertexAttributePosition  = 0,
     VertexAttributeTexcoord  = 1,
-};
+    VertexAttributeNormal    = 2,
+    VertexAttributeTangent   = 3,
+    VertexAttributeBitangent = 4
+}   VertexAttributes;
 
-typedef NS_ENUM(EnumBackingType, TextureIndex)
+typedef enum BufferIndex
 {
-    TextureIndexColor    = 0,
-};
+    BufferIndexMeshPositions     = 0,
+    BufferIndexMeshGenerics      = 1,
+    BufferIndexFrameData         = 2,
+    BufferIndexLightsData        = 3,
+    BufferIndexLightsPosition    = 4,
+    BufferIndexFlatColor         = 0,
+    BufferIndexDepthRange        = 0,
+}   BufferIndex;
+
+typedef enum TextureIndex
+{
+    TextureIndexBaseColor = 0,
+    TextureIndexSpecular  = 1,
+    TextureIndexNormal    = 2,
+    TextureIndexShadow    = 3,
+    TextureIndexAlpha     = 4,
+    NumMeshTextures = TextureIndexNormal + 1
+}   TextureIndex;
+
+typedef enum RenderTargetIndex
+{
+    RenderTargetLighting  = 0,
+    RenderTargetAlbedo    = 1,
+    RenderTargetNormal    = 2,
+    RenderTargetDepth     = 3
+}   RenderTargetIndex;
 
 typedef struct
 {
-    matrix_float4x4 projectionMatrix;
-    matrix_float4x4 modelViewMatrix;
-} Uniforms;
+    simd_float2 position;
+    simd_float4 color;
+} VertexData;
 
 #endif /* ShaderTypes_h */
 
