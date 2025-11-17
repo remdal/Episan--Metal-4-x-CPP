@@ -16,6 +16,7 @@
 #include <unordered_map>
 
 #include "RMDLMainRenderer_shared.h"
+#include "RMDLCamera.hpp"
 #include "RMDLUtils.hpp"
 
 #define kMaxBuffersInFlight 3
@@ -62,7 +63,7 @@ public:
     };
     
     void setHighScore(int highScore, HighScoreSource scoreSource);
-    int highScore() const                { return _highScore; }
+//    int highScore() const                { return _highScore; }
 
     void setupCamera();
     void moveCamera( simd::float3 translation );
@@ -91,8 +92,7 @@ public:
     void compileRenderPipeline( MTL::PixelFormat, const std::string& );
 
 private:
-
-    MTL::PixelFormat                    _layerPixelFormat;
+    MTL::PixelFormat                    _pPixelFormat;
     MTL4::CommandQueue*                 _pCommandQueue;
     MTL4::CommandBuffer*                _pCommandBuffer;
     MTL4::CommandAllocator*             _pCommandAllocator[kMaxBuffersInFlight];
@@ -112,57 +112,53 @@ private:
     simd_uint2                          _pViewportSize;
     MTL::Library*                       _pShaderLibrary;
     int                                 _frameNumber;
-    
-    simd::float4x4 _presentOrtho;
-    
-    
-    MTL::Buffer*                        _pUniformBuffer;
-    
-    NS::SharedPtr<MTL::Texture>         _pBackbuffer;
-    NS::SharedPtr<MTL::Texture>         _pUpscaledbuffer;
-    NS::SharedPtr<MTL::Texture>         _pBackbufferAdapter;
-    NS::SharedPtr<MTL::Texture>         _pUpscaledbufferAdapter;
+    NS::SharedPtr<MTL::SharedEvent>     _pPacingEvent;
 
+    /* Jeu de la Vie */
+    MTL4::CommandAllocator*             _pCommandAllocatorJDLV[kMaxBuffersInFlight];
+    MTL::Buffer* _pJDLVStateBuffer[kMaxBuffersInFlight];
+    MTL::Buffer* _pGridBuffer_A[kMaxBuffersInFlight];
+    MTL::Buffer*            _pGridBuffer_B[kMaxBuffersInFlight];
+    MTL::ComputePipelineState*  _pJDLVComputePSO;
+    MTL::RenderPipelineState*   _pJDLVRenderPSO;
+    MTL4::ArgumentTable*                _pArgumentTableJDLV;
+//    MTL::ComputePipelineState* _pJDLVRenderPSO;
+    bool _useBufferAAsSource;
+        
+    void initGrid();
+    void buildJDLVPipelines();
 
-    int            _highScore;
-    int            _prevScore;
+//    simd::float4x4                      _presentOrtho;
+//    MTL::Buffer*                        _pUniformBuffer;
+//    NS::SharedPtr<MTL::Texture>         _pBackbuffer;
+//    NS::SharedPtr<MTL::Texture>         _pUpscaledbuffer;
+//    NS::SharedPtr<MTL::Texture>         _pBackbufferAdapter;
+//    NS::SharedPtr<MTL::Texture>         _pUpscaledbufferAdapter;
+//    int            _highScore;
+//    int            _prevScore;
     float          _maxEDRValue;
     float          _brightness;
     float          _edrBias;
-    
-    NS::SharedPtr<MTL::SharedEvent>     _pPacingEvent;
-    uint64_t                            _pacingTimeStampIndex;
-
+//    uint64_t                            _pacingTimeStampIndex;
+//    MTL::SamplerState*                  _pSampler;
+//    std::unordered_map<std::string, NS::SharedPtr<MTL::Texture>> _textureAssets;
 //    MTL::RenderPipelineState*           _pPresentPipeline;
 //    MTL::RenderPipelineState*           _pInstancedSpritePipeline;
 //    NS::SharedPtr<MTLFX::SpatialScaler> _pSpatialScaler;
-
-    // Assets:
-    MTL::SamplerState*          _pSampler;
-
-    std::unordered_map<std::string, NS::SharedPtr<MTL::Texture>> _textureAssets;
-
-    /* P */
-
-    
-    MTL::RenderPipelineState*           _pMapPSO;
-    MTL::RenderPipelineState*           _pCameraPSO;
-    MTL::ComputePipelineState*          _pComputePSO;
-    
-    
-    MTL::Buffer*                        _pVertexDataBuffer;
-    //
+//    MTL::PixelFormat                    _layerPixelFormat;
+//    MTL::RenderPipelineState*           _pMapPSO;
+//    MTL::RenderPipelineState*           _pCameraPSO;
+//    MTL::ComputePipelineState*          _pComputePSO;
+//    MTL::Buffer*                        _pVertexDataBuffer;
     //MTL::Buffer*                _pCameraDataBuffer[kMaxFramesInFlight];
-    MTL::Buffer*                _pIndexBuffer;
-    MTL::Buffer*                _pTextureAnimationBuffer;
-    float                       _angle;
-    int                         _frameP;
-    
-    uint                        _animationIndex;
-    NS::SharedPtr<MTL::Texture>         _pUpscaledbufferAdapterP;
-    MTL::Buffer* _pVertexDataBufferMap;
-    MTL::Buffer* _pIndexBufferMap;
-    static const int            kMaxFramesInFlight;
+//    MTL::Buffer*                _pIndexBuffer;
+//    MTL::Buffer*                _pTextureAnimationBuffer;
+//    float                       _angle;
+//    int                         _frameP;
+//    uint                        _animationIndex;
+//    NS::SharedPtr<MTL::Texture>         _pUpscaledbufferAdapterP;
+//    MTL::Buffer* _pVertexDataBufferMap;
+//    MTL::Buffer* _pIndexBufferMap;
 };
 
 #endif /* RMDLGAMECOORDINATOR_HPP */

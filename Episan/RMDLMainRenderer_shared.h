@@ -112,5 +112,13 @@ typedef struct
     simd_float4 color;
 } VertexData;
 
+struct JDLVState
+{
+    uint32_t width;
+    uint32_t height;
+    uint32_t frameCount;
+    float time; // ??
+};
+
 #endif /* ShaderTypes_h */
 

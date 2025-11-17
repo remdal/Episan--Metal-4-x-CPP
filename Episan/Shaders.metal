@@ -25,7 +25,7 @@ typedef struct
 } ColorInOut;
 
 vertex ColorInOut vertexShaderCube(Vertex in [[stage_in]],
-                               constant RMDLCameraUniforms & uniforms [[ buffer(BufferIndexMeshPositions) ]])
+                                   constant RMDLCameraUniforms & uniforms [[ buffer(BufferIndexMeshPositions) ]])
 {
     ColorInOut out;
 
