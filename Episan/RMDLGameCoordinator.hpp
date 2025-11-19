@@ -40,6 +40,7 @@ public:
                     const std::string& assetSearchPath);
     ~GameCoordinator();
 
+    void resizeMtkView( NS::UInteger nWidth, NS::UInteger wHeight );
     void buildRenderPipelines( const std::string& shaderSearchPath );
     void buildComputePipelines( const std::string& shaderSearchPath );
     void buildRenderTextures(NS::UInteger nativeWidth, NS::UInteger nativeHeight,
@@ -52,7 +53,6 @@ public:
 
     void presentTexture( MTL::RenderCommandEncoder* pRenderEnc, MTL::Texture* pTexture );
 
-    void resizeDrawable(float width, float height);
     void setMaxEDRValue(float value)     { _maxEDRValue = value; }
     void setBrightness(float brightness) { _brightness = brightness; }
     void setEDRBias(float edrBias)       { _edrBias = edrBias; }
@@ -72,14 +72,12 @@ public:
     
     float _rotationAngle;
     void buildCubeBuffers();
-    
-    /* P */
+
     void buildShaders();
     void buildComputePipeline();
     void buildDepthStencilStates();
     void buildTextures();
     void buildBuffers();
-//    void generateMandelbrotTexture( MTL::CommandBuffer* pCommandBuffer );
     void draw( MTK::View* _pView );
     void buildShadersMap();
     void buildBuffersMap();
@@ -114,15 +112,12 @@ private:
     int                                 _frameNumber;
     NS::SharedPtr<MTL::SharedEvent>     _pPacingEvent;
 
-    /* Jeu de la Vie */
-    MTL4::CommandAllocator*             _pCommandAllocatorJDLV[kMaxBuffersInFlight];
     MTL::Buffer* _pJDLVStateBuffer[kMaxBuffersInFlight];
     MTL::Buffer* _pGridBuffer_A[kMaxBuffersInFlight];
     MTL::Buffer*            _pGridBuffer_B[kMaxBuffersInFlight];
     MTL::ComputePipelineState*  _pJDLVComputePSO;
     MTL::RenderPipelineState*   _pJDLVRenderPSO;
     MTL4::ArgumentTable*                _pArgumentTableJDLV;
-//    MTL::ComputePipelineState* _pJDLVRenderPSO;
     bool _useBufferAAsSource;
         
     void initGrid();

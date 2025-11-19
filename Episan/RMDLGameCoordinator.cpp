@@ -147,7 +147,6 @@ GameCoordinator::GameCoordinator(MTL::Device* pDevice,
         _pTriangleDataBuffer[i]->setLabel( NS::String::string( name.c_str(), NS::ASCIIStringEncoding ) );
 
         _pCommandAllocator[i] = _pDevice->newCommandAllocator();
-        _pCommandAllocatorJDLV[i] = _pDevice->newCommandAllocator();
 
         _pJDLVStateBuffer[i] = _pDevice->newBuffer( sizeof(JDLVState), MTL::ResourceStorageModeManaged );
         _pGridBuffer_A[i] = _pDevice->newBuffer( gridSize, MTL::ResourceStorageModeManaged );
@@ -161,8 +160,10 @@ GameCoordinator::GameCoordinator(MTL::Device* pDevice,
     initGrid();
     buildJDLVPipelines();
 
-    _pViewportSize.x = (float)width;
-    _pViewportSize.y = (float)height;
+    const NS::UInteger nativeWidth = (NS::UInteger)(width/1.2);
+    const NS::UInteger nativeHeight = (NS::UInteger)(height/1.2);
+    _pViewportSize.x = (float)nativeWidth;
+    _pViewportSize.y = (float)nativeHeight;
     _pViewportSizeBuffer = _pDevice->newBuffer(sizeof(_pViewportSize), MTL::ResourceStorageModeShared);
     ft_memcpy(_pViewportSizeBuffer->contents(), &_pViewportSize, sizeof(_pViewportSize));
 
@@ -189,7 +190,6 @@ GameCoordinator::~GameCoordinator()
         _pJDLVStateBuffer[i]->release();
         _pGridBuffer_A[i]->release();
         _pGridBuffer_B[i]->release();
-        _pCommandAllocatorJDLV[i]->release();
     }
     _pJDLVComputePSO->release();
     _pJDLVRenderPSO->release();
@@ -208,27 +208,32 @@ GameCoordinator::~GameCoordinator()
     _pDevice->release();
 }
 
+void GameCoordinator::resizeMtkView( NS::UInteger width, NS::UInteger height )
+{
+    
+}
+
 void GameCoordinator::initGrid()
 {
     uint32_t* gridData = static_cast<uint32_t*>(_pGridBuffer_A[0]->contents());
 
     int gunPattern[36][9] = {
             {1,0,1,0,1,0,1,1,1},
-            {0,0,1,0,0,0,0,0,0},
-            {0,0,1,0,0,0,0,0,0},
-            {1,1,0,0,0,1,1,0,0},
+            {1,0,1,0,0,0,1,0,0},
+            {1,0,1,0,1,0,0,1,0},
+            {0,1,0,0,1,1,1,0,0},
             {1,0,0,0,0,0,1,1,0},
             {1,1,0,0,0,1,1,0,1},
-            {0,1,1,0,0,0,0,0,0},
-            {1,0,0,1,0,1,1,1,0},
-            {0,1,1,0,0,0,0,1,1},
+            {0,1,1,0,0,0,0,1,0},
+            {1,0,0,1,1,1,1,1,1},
+            {0,1,1,1,1,1,1,1,1},
             {0,0,1,1,1,0,0,1,1},
             {0,0,0,1,1,1,0,1,0},
             {0,0,0,1,0,1,1,1,0},
             {0,0,0,1,0,1,1,0,1},
             {0,0,0,1,1,1,1,1,0},
             {0,0,0,0,0,1,1,1,0},
-            {1,1,0,1,0,1,0,0,0},
+            {1,1,0,1,0,1,1,1,0},
             {1,1,0,1,1,1,1,0,1} };
 
     int startX = kGridWidth / 2 - 4;
@@ -287,7 +292,6 @@ void GameCoordinator::buildJDLVPipelines()
 
     _pResidencySet = _pDevice->newResidencySet(residencySetDescriptor, &pError);
     _pResidencySet->requestResidency();
-    _pCommandQueue->addResidencySet(_pResidencySet); // .get() is for struct
 
     for (uint8_t i = 0u; i < kMaxFramesInFlight; ++i)
     {
@@ -297,7 +301,7 @@ void GameCoordinator::buildJDLVPipelines()
     }
     _pResidencySet->commit();
 
-    _pCommandQueue->addResidencySet(_pResidencySet);
+    _pCommandQueue->addResidencySet(_pResidencySet); // .get() is for struct
 
     residencySetDescriptor->release();
     computeArgumentTable->release();
@@ -329,7 +333,6 @@ void GameCoordinator::makeResidencySet()
 
     _pResidencySet = _pDevice->newResidencySet(residencySetDescriptor, &pError);
     _pResidencySet->requestResidency();
-    _pCommandQueue->addResidencySet(_pResidencySet); // .get() is for struct
 
     for (uint8_t i = 0u; i < kMaxFramesInFlight; ++i)
     {
@@ -337,9 +340,8 @@ void GameCoordinator::makeResidencySet()
     }
     _pResidencySet->addAllocation(_pViewportSizeBuffer);
 
-    _pResidencySet->commit();
-
-    _pCommandQueue->addResidencySet(_pResidencySet);
+    //_pResidencySet->commit();
+    //_pCommandQueue->addResidencySet(_pResidencySet); // .get() is for struct
 //    _pCommandQueue->addResidencySet((CA::MetalLayer *)layer)
     residencySetDescriptor->release();
 }
@@ -417,22 +419,21 @@ void GameCoordinator::draw( MTK::View* _pView )
     NS::AutoreleasePool *pPool = NS::AutoreleasePool::alloc()->init();
 
     _currentFrameIndex += 1;
-    _frameNumber++;
-    
+
     const uint32_t frameIndex = _currentFrameIndex % kMaxFramesInFlight;
     std::string label = "Frame: " + std::to_string(_currentFrameIndex);
     
     if (_currentFrameIndex > kMaxFramesInFlight)
     {
         uint64_t const timeStampToWait = _currentFrameIndex - kMaxFramesInFlight;
-        _pPacingEvent->waitUntilSignaledValue(timeStampToWait, DISPATCH_TIME_FOREVER);
+        _sharedEvent->waitUntilSignaledValue(timeStampToWait, DISPATCH_TIME_FOREVER);
     }
 
     MTL::Viewport viewPort;
     viewPort.originX = 0.0;
     viewPort.originY = 0.0;
     viewPort.znear = 0.0;
-    viewPort.zfar = 1.0;
+    viewPort.zfar = 0.98;
     viewPort.width = (double)_pViewportSize.x;
     viewPort.height = (double)_pViewportSize.y;
 
@@ -452,9 +453,9 @@ void GameCoordinator::draw( MTK::View* _pView )
     _pCommandBuffer[0]->setLabel( NS::String::string( label.c_str(), NS::ASCIIStringEncoding ) );
 
     MTL4::RenderPassDescriptor* pRenderPassDescriptor = _pView->currentMTL4RenderPassDescriptor();
-//    MTL::RenderPassColorAttachmentDescriptor* color0 = pRenderPassDescriptor->colorAttachments()->object(0);
-//    color0->setLoadAction( MTL::LoadActionClear );
-//    color0->setStoreAction( MTL::StoreActionStore );
+    MTL::RenderPassColorAttachmentDescriptor* color0 = pRenderPassDescriptor->colorAttachments()->object(0);
+    color0->setLoadAction( MTL::LoadActionClear );
+    color0->setStoreAction( MTL::StoreActionStore );
 //    color0->setClearColor( MTL::ClearColor(0.1, 0.1, 0.1, 1.0) );
 
     MTL4::RenderCommandEncoder* renderPassEncoder = _pCommandBuffer[0]->renderCommandEncoder(pRenderPassDescriptor);
@@ -472,11 +473,8 @@ void GameCoordinator::draw( MTK::View* _pView )
     renderPassEncoder->endEncoding();
     _pCommandBuffer[0]->endCommandBuffer();
 
-    MTL4::CommandAllocator* pFrameAllocatorJDLV = _pCommandAllocatorJDLV[frameIndex];
-    pFrameAllocatorJDLV->reset();
-
     _pCommandBuffer[1] = _pDevice->newCommandBuffer();
-    _pCommandBuffer[1]->beginCommandBuffer(pFrameAllocatorJDLV);
+    _pCommandBuffer[1]->beginCommandBuffer(pFrameAllocator);
 
     JDLVState* jdlvState = static_cast<JDLVState*>(_pJDLVStateBuffer[frameIndex]->contents());
     jdlvState->width = kGridWidth;
@@ -505,18 +503,13 @@ void GameCoordinator::draw( MTK::View* _pView )
     computeEncoder->endEncoding();
 
     _pCommandBuffer[1]->endCommandBuffer();
-//    MTL4::CommandAllocator* pFrameAllocatorJDLV2 = _pCommandAllocatorJDLV[frameIndex];
-//    pFrameAllocatorJDLV2->reset();
     _pCommandBuffer[2] = _pDevice->newCommandBuffer();
-    _pCommandBuffer[2]->beginCommandBuffer(pFrameAllocatorJDLV);
+    _pCommandBuffer[2]->beginCommandBuffer(pFrameAllocator);
 
     MTL4::RenderCommandEncoder* gridRenderPassEncoder = _pCommandBuffer[2]->renderCommandEncoder(pRenderPassDescriptor);
 
     gridRenderPassEncoder->setRenderPipelineState(_pJDLVRenderPSO);
-
     //gridRenderPassEncoder->setViewport(viewPortJDLV);
-
-    _useBufferAAsSource = !_useBufferAAsSource;
 
     _pArgumentTableJDLV->setAddress(destGrid->gpuAddress(), 0);
     _pArgumentTableJDLV->setAddress(_pJDLVStateBuffer[frameIndex]->gpuAddress(), 1);
@@ -527,6 +520,8 @@ void GameCoordinator::draw( MTK::View* _pView )
     gridRenderPassEncoder->endEncoding();
 
     _pCommandBuffer[2]->endCommandBuffer();
+
+    _useBufferAAsSource = !_useBufferAAsSource;
 
     CA::MetalDrawable* currentDrawable = _pView->currentDrawable();
     _pCommandQueue->wait(currentDrawable);

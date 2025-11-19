@@ -21,7 +21,7 @@ kernel void JDLVCompute(device const uint* sourceGrid [[buffer(0)]],
     uint index = gid.y * gameState.width + gid.x;
 
     uint liveNeighbors = 0;
-    // Use signed offsets and signed temporaries for neighbor coordinates
+
     for (int dy = -1; dy <= 1; ++dy)
     {
         for (int dx = -1; dx <= 1; ++dx)
@@ -48,10 +48,8 @@ kernel void JDLVCompute(device const uint* sourceGrid [[buffer(0)]],
     uint currentState = sourceGrid[index];
     uint newState = 0;
 
-    // Conway's Game of Life rules (clamped edges)
     if (currentState == 1)
     {
-        // Survival with 2 or 3 neighbors
         if (liveNeighbors == 2 || liveNeighbors == 3)
             newState = 1;
         else
@@ -59,7 +57,6 @@ kernel void JDLVCompute(device const uint* sourceGrid [[buffer(0)]],
     }
     else
     {
-        // Birth with exactly 3 neighbors
         if (liveNeighbors == 3)
             newState = 1;
     }
@@ -79,7 +76,6 @@ vertex VertexOut JDLVVertex(constant uint* grid [[buffer(0)]],
 {
     VertexOut out;
 
-    // Fullscreen quad made of two triangles
     float2 positions[6] =
     {
         float2(-1.0, -1.0), float2( 1.0, -1.0), float2(-1.0,  1.0),
@@ -102,15 +98,13 @@ fragment float4 JDLVFragment(VertexOut in [[stage_in]],
                              constant uint* grid [[buffer(0)]],
                              constant JDLVState& gameState [[buffer(1)]])
 {
-    // Convert texcoords to integer indices and clamp to valid range
     float fx = clamp(in.texCoord.x, 0.0f, 0.99999994f); // slightly less than 1.0f
     float fy = clamp(in.texCoord.y, 0.0f, 0.99999994f);
 
     uint x = uint(fx * float(gameState.width));
-    // You flipped Y in the original code; keep that convention
+
     uint y = uint((1.0f - fy) * float(gameState.height));
 
-    // Extra safety clamp in case of precision edge cases
     x = min(x, gameState.width  - 1);
     y = min(y, gameState.height - 1);
 

@@ -5,11 +5,8 @@
 //  Created by Rémy on 15/11/2025.
 //
 
-//
-//  Header containing types and enum constants shared between Metal shaders and Swift/ObjC source
-//
-#ifndef ShaderTypes_h
-#define ShaderTypes_h
+#ifndef RMDLMAINRENDERER_SHARED_H
+#define RMDLMAINRENDERER_SHARED_H
 
 #include <simd/simd.h>
 
@@ -118,5 +115,5 @@ struct JDLVState
     uint32_t height;
 };
 
-#endif /* ShaderTypes_h */
+#endif /* RMDLMAINRENDERER_SHARED_H */
 
