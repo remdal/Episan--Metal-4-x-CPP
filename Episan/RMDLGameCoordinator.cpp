@@ -222,16 +222,26 @@ void GameCoordinator::buildDepthStencilStates()
     pDsDesc->setDepthCompareFunction( MTL::CompareFunction::CompareFunctionLess );
     pDsDesc->setDepthWriteEnabled( false );
 
+    _gBufferPassDesc->depthAttachment()->setClearDepth( 1.0f );
+    _gBufferPassDesc->depthAttachment()->setLevel(0);
+    _gBufferPassDesc->depthAttachment()->setSlice(0);
+//    _gBufferPassDesc->depthAttachment()->setTexture( _shadowMap );
+    _gBufferPassDesc->depthAttachment()->setLoadAction( MTL::LoadActionClear );
+    _gBufferPassDesc->depthAttachment()->setStoreAction( MTL::StoreActionStore );
+
+    _gBufferPassDesc->colorAttachments()->object(0)->setLoadAction( MTL::LoadActionDontCare );
+    _gBufferPassDesc->colorAttachments()->object(0)->setStoreAction( MTL::StoreActionStore );
+    _gBufferPassDesc->colorAttachments()->object(1)->setLoadAction( MTL::LoadActionDontCare );
+    _gBufferPassDesc->colorAttachments()->object(1)->setStoreAction( MTL::StoreActionStore );
+    
+    pDsDesc->setDepthCompareFunction( MTL::CompareFunctionLess );
+    pDsDesc->setDepthWriteEnabled( true );
+
     _pDepthStencilStateJDLV = _pDevice->newDepthStencilState( pDsDesc );
     pDsDesc->release();
 
-
-    MTL::DepthStencilDescriptor* pDsDesct = MTL::DepthStencilDescriptor::alloc()->init();
-    pDsDesct->setDepthCompareFunction( MTL::CompareFunction::CompareFunctionLess );
-    pDsDesct->setDepthWriteEnabled( true );
-
-    _pDepthStencilState = _pDevice->newDepthStencilState( pDsDesct );
-    pDsDesct->release();
+    _pDepthStencilState = _pDevice->newDepthStencilState( pDsDesc );
+    pDsDesc->release();
 //    MTL::TextureDescriptor* depthDesc =
 //        MTL::TextureDescriptor::texture2DDescriptorWithPixelFormat(
 //            MTL::PixelFormatDepth32Float,
