@@ -218,30 +218,30 @@ void GameCoordinator::resizeMtkView( NS::UInteger width, NS::UInteger height )
 
 void GameCoordinator::buildDepthStencilStates()
 {
-    MTL::DepthStencilDescriptor* pDsDesc = MTL::DepthStencilDescriptor::alloc()->init();
-    pDsDesc->setDepthCompareFunction( MTL::CompareFunction::CompareFunctionLess );
-    pDsDesc->setDepthWriteEnabled( false );
+//    MTL::DepthStencilDescriptor* pDsDesc = MTL::DepthStencilDescriptor::alloc()->init();
+//    pDsDesc->setDepthCompareFunction( MTL::CompareFunction::CompareFunctionLess );
+//    pDsDesc->setDepthWriteEnabled( false );
+//
+//    _gBufferPassDesc->depthAttachment()->setClearDepth( 1.0f );
+//    _gBufferPassDesc->depthAttachment()->setLevel(0);
+//    _gBufferPassDesc->depthAttachment()->setSlice(0);
+////    _gBufferPassDesc->depthAttachment()->setTexture( _shadowMap );
+//    _gBufferPassDesc->depthAttachment()->setLoadAction( MTL::LoadActionClear );
+//    _gBufferPassDesc->depthAttachment()->setStoreAction( MTL::StoreActionStore );
+//
+//    _gBufferPassDesc->colorAttachments()->object(0)->setLoadAction( MTL::LoadActionDontCare );
+//    _gBufferPassDesc->colorAttachments()->object(0)->setStoreAction( MTL::StoreActionStore );
+//    _gBufferPassDesc->colorAttachments()->object(1)->setLoadAction( MTL::LoadActionDontCare );
+//    _gBufferPassDesc->colorAttachments()->object(1)->setStoreAction( MTL::StoreActionStore );
+//    
+//    pDsDesc->setDepthCompareFunction( MTL::CompareFunctionLess );
+//    pDsDesc->setDepthWriteEnabled( true );
 
-    _gBufferPassDesc->depthAttachment()->setClearDepth( 1.0f );
-    _gBufferPassDesc->depthAttachment()->setLevel(0);
-    _gBufferPassDesc->depthAttachment()->setSlice(0);
-//    _gBufferPassDesc->depthAttachment()->setTexture( _shadowMap );
-    _gBufferPassDesc->depthAttachment()->setLoadAction( MTL::LoadActionClear );
-    _gBufferPassDesc->depthAttachment()->setStoreAction( MTL::StoreActionStore );
+//    _pDepthStencilStateJDLV = _pDevice->newDepthStencilState( pDsDesc );
+//    pDsDesc->release();
 
-    _gBufferPassDesc->colorAttachments()->object(0)->setLoadAction( MTL::LoadActionDontCare );
-    _gBufferPassDesc->colorAttachments()->object(0)->setStoreAction( MTL::StoreActionStore );
-    _gBufferPassDesc->colorAttachments()->object(1)->setLoadAction( MTL::LoadActionDontCare );
-    _gBufferPassDesc->colorAttachments()->object(1)->setStoreAction( MTL::StoreActionStore );
-    
-    pDsDesc->setDepthCompareFunction( MTL::CompareFunctionLess );
-    pDsDesc->setDepthWriteEnabled( true );
-
-    _pDepthStencilStateJDLV = _pDevice->newDepthStencilState( pDsDesc );
-    pDsDesc->release();
-
-    _pDepthStencilState = _pDevice->newDepthStencilState( pDsDesc );
-    pDsDesc->release();
+//    _pDepthStencilState = _pDevice->newDepthStencilState( pDsDesc );
+//    pDsDesc->release();
 //    MTL::TextureDescriptor* depthDesc =
 //        MTL::TextureDescriptor::texture2DDescriptorWithPixelFormat(
 //            MTL::PixelFormatDepth32Float,
@@ -500,7 +500,7 @@ void GameCoordinator::draw( MTK::View* _pView )
     MTL4::RenderCommandEncoder* renderPassEncoder = _pCommandBuffer[0]->renderCommandEncoder(pRenderPassDescriptor);
     renderPassEncoder->setLabel(NS::String::string(label.c_str(), NS::ASCIIStringEncoding));
     renderPassEncoder->setRenderPipelineState(_pPSO);
-    renderPassEncoder->setDepthStencilState( _pDepthStencilState );
+//    renderPassEncoder->setDepthStencilState( _pDepthStencilState );
     renderPassEncoder->setViewport(viewPort);
 
     configureVertexDataForBuffer(_currentFrameIndex, _pTriangleDataBuffer[frameIndex]->contents());
@@ -549,7 +549,7 @@ void GameCoordinator::draw( MTK::View* _pView )
     MTL4::RenderCommandEncoder* gridRenderPassEncoder = _pCommandBuffer[2]->renderCommandEncoder(pRenderPassDescriptor);
 
     gridRenderPassEncoder->setRenderPipelineState(_pJDLVRenderPSO);
-    gridRenderPassEncoder->setDepthStencilState( _pDepthStencilStateJDLV );
+//    gridRenderPassEncoder->setDepthStencilState( _pDepthStencilStateJDLV );
     gridRenderPassEncoder->setViewport(viewPortJDLV);
 
     _pArgumentTableJDLV->setAddress(destGrid->gpuAddress(), 0);
