@@ -162,8 +162,8 @@ GameCoordinator::GameCoordinator(MTL::Device* pDevice,
     buildJDLVPipelines();
     buildDepthStencilStates( width, height );
 
-    const NS::UInteger nativeWidth = (NS::UInteger)(width/1.2);
-    const NS::UInteger nativeHeight = (NS::UInteger)(height/1.2);
+    const NS::UInteger nativeWidth = (NS::UInteger)(width);
+    const NS::UInteger nativeHeight = (NS::UInteger)(height);
     _pViewportSize.x = (float)nativeWidth;
     _pViewportSize.y = (float)nativeHeight;
     _pViewportSizeBuffer = _pDevice->newBuffer(sizeof(_pViewportSize), MTL::ResourceStorageModeShared);
@@ -223,8 +223,8 @@ void GameCoordinator::resizeMtkView( NS::UInteger width, NS::UInteger height )
     MTL::TextureDescriptor* depthDesc =
         MTL::TextureDescriptor::texture2DDescriptor(
             MTL::PixelFormatDepth32Float,
-            (NS::UInteger)_pViewportSize.x,
-            (NS::UInteger)_pViewportSize.y,
+            width,
+            height,
             false);
     depthDesc->setUsage(MTL::TextureUsageRenderTarget);
     depthDesc->setStorageMode(MTL::StorageModePrivate);
@@ -238,7 +238,7 @@ void GameCoordinator::buildDepthStencilStates( NS::UInteger width, NS::UInteger 
     MTL::DepthStencilDescriptor* pDsDescTriangle = MTL::DepthStencilDescriptor::alloc()->init();
     pDsDesc->setDepthCompareFunction( MTL::CompareFunction::CompareFunctionAlways );
     pDsDescTriangle->setDepthCompareFunction( MTL::CompareFunction::CompareFunctionLess );
-    pDsDesc->setDepthWriteEnabled( true );
+    pDsDesc->setDepthWriteEnabled( false );
     pDsDescTriangle->setDepthWriteEnabled( true );
 
     _pDepthStencilStateJDLV = _pDevice->newDepthStencilState( pDsDesc );
@@ -314,6 +314,14 @@ void GameCoordinator::buildJDLVPipelines()
     MTL4::RenderPipelineDescriptor* renderDescriptor = MTL4::RenderPipelineDescriptor::alloc()->init();
     renderDescriptor->setLabel(MTLSTR("JDLV Pipeline"));
     renderDescriptor->colorAttachments()->object(0)->setPixelFormat( MTL::PixelFormatRGBA16Float );
+
+    renderDescriptor->colorAttachments()->object(0)->setBlendingState(MTL4::BlendStateEnabled);
+    renderDescriptor->colorAttachments()->object(0)->setSourceRGBBlendFactor(MTL::BlendFactorSourceAlpha);
+    renderDescriptor->colorAttachments()->object(0)->setDestinationRGBBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
+    renderDescriptor->colorAttachments()->object(0)->setRgbBlendOperation(MTL::BlendOperationAdd);
+    renderDescriptor->colorAttachments()->object(0)->setSourceAlphaBlendFactor(MTL::BlendFactorOne);
+    renderDescriptor->colorAttachments()->object(0)->setDestinationAlphaBlendFactor(MTL::BlendFactorOneMinusSourceAlpha);
+    renderDescriptor->colorAttachments()->object(0)->setAlphaBlendOperation(MTL::BlendOperationAdd);
     
     MTL4::LibraryFunctionDescriptor* vertexFunction = MTL4::LibraryFunctionDescriptor::alloc()->init();
     vertexFunction->setName(MTLSTR("JDLVVertex"));
@@ -485,8 +493,8 @@ void GameCoordinator::draw( MTK::View* _pView )
     viewPort.height = (double)_pViewportSize.y;
 
     MTL::Viewport viewPortJDLV;
-    viewPortJDLV.originX = 0.0;
-    viewPortJDLV.originY = 0.0;
+    viewPortJDLV.originX = 200.0;
+    viewPortJDLV.originY = 200.0;
     viewPortJDLV.znear = 0.0;
     viewPortJDLV.zfar = 1.0;
     viewPortJDLV.width = (double)_pViewportSize.x;
@@ -503,6 +511,7 @@ void GameCoordinator::draw( MTK::View* _pView )
     color0->setLoadAction( MTL::LoadActionClear );
     color0->setStoreAction( MTL::StoreActionStore );
     color0->setClearColor( MTL::ClearColor(0.1, 0.1, 0.1, 1.0) );
+
     pRenderPassDescriptor->depthAttachment()->setTexture(_pTexture);
     pRenderPassDescriptor->depthAttachment()->setClearDepth(1.0f);
     pRenderPassDescriptor->depthAttachment()->setLoadAction(MTL::LoadActionClear);
@@ -553,10 +562,12 @@ void GameCoordinator::draw( MTK::View* _pView )
     computeEncoder->dispatchThreadgroups(threadgroups, threadgroupSize);
     computeEncoder->endEncoding();
 
-    color0->setLoadAction(MTL::LoadActionLoad);
     _pCommandBuffer[1]->endCommandBuffer();
     _pCommandBuffer[2] = _pDevice->newCommandBuffer();
     _pCommandBuffer[2]->beginCommandBuffer(_pCommandAllocator[frameIndex]);
+
+    color0->setLoadAction(MTL::LoadActionLoad);
+    pRenderPassDescriptor->depthAttachment()->setLoadAction(MTL::LoadActionLoad);
 
     MTL4::RenderCommandEncoder* gridRenderPassEncoder = _pCommandBuffer[2]->renderCommandEncoder(pRenderPassDescriptor);
 

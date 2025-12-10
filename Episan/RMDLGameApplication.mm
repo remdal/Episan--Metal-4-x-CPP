@@ -113,7 +113,8 @@
     _pMtkView = [[MTKView alloc] initWithFrame:_window.contentLayoutRect device:device];
     _pMtkView.autoresizingMask = NSViewWidthSizable | NSViewHeightSizable;
     _pMtkView.colorPixelFormat = MTLPixelFormatRGBA16Float;
-    _pMtkView.depthStencilPixelFormat = MTLPixelFormatInvalid;
+    _pMtkView.depthStencilPixelFormat = MTLPixelFormatDepth32Float;
+    _pMtkView.clearDepth = 1.0f;
     _pMtkView.framebufferOnly = YES;
     _pMtkView.paused = NO;
     _pMtkView.delegate = self;

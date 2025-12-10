@@ -88,7 +88,7 @@ vertex VertexOut JDLVVertex(constant uint* grid [[buffer(0)]],
         float2(0.0, 0.0), float2(1.0, 1.0), float2(1.0, 0.0)
     };
 
-    out.position = float4(positions[vertexID], 0.0, 1.0);
+    out.position = float4(positions[vertexID], 0.0, 1);
     out.texCoord = texCoords[vertexID];
 
     return out;
@@ -112,8 +112,7 @@ fragment float4 JDLVFragment(VertexOut in [[stage_in]],
 
     uint cellState = grid[index];
 
-    float4 color = (cellState > 0) ? float4(1.0, 1.0, 1.0, 1.0)
-                                   : float4(0.0, 0.0, 0.0, 0.0);
+    float4 color = (cellState > 0) ? float4(1.0, 1.0, 1.0, 1.0) : float4(0.0, 0.0, 0.0, 0.0);
 
     return color;
 }
