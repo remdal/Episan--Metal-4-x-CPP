@@ -75,7 +75,7 @@ public:
 
     void buildShaders();
     void buildComputePipeline();
-    void buildDepthStencilStates();
+    void buildDepthStencilStates( NS::UInteger width, NS::UInteger height );
     void buildTextures();
     void buildBuffers();
     void draw( MTK::View* _pView );

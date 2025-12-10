@@ -160,7 +160,7 @@ GameCoordinator::GameCoordinator(MTL::Device* pDevice,
 
     initGrid();
     buildJDLVPipelines();
-    buildDepthStencilStates();
+    buildDepthStencilStates( width, height );
 
     const NS::UInteger nativeWidth = (NS::UInteger)(width/1.2);
     const NS::UInteger nativeHeight = (NS::UInteger)(height/1.2);
@@ -213,45 +213,52 @@ GameCoordinator::~GameCoordinator()
 
 void GameCoordinator::resizeMtkView( NS::UInteger width, NS::UInteger height )
 {
-    
+    const NS::UInteger nativeWidth = (NS::UInteger)(width/1.2);
+    const NS::UInteger nativeHeight = (NS::UInteger)(height/1.2);
+    _pViewportSize.x = (float)nativeWidth;
+    _pViewportSize.y = (float)nativeHeight;
+
+    _pViewportSizeBuffer = _pDevice->newBuffer(sizeof(_pViewportSize), MTL::ResourceStorageModeShared);
+    ft_memcpy(_pViewportSizeBuffer->contents(), &_pViewportSize, sizeof(_pViewportSize));
+    MTL::TextureDescriptor* depthDesc =
+        MTL::TextureDescriptor::texture2DDescriptor(
+            MTL::PixelFormatDepth32Float,
+            (NS::UInteger)_pViewportSize.x,
+            (NS::UInteger)_pViewportSize.y,
+            false);
+    depthDesc->setUsage(MTL::TextureUsageRenderTarget);
+    depthDesc->setStorageMode(MTL::StorageModePrivate);
+    _pTexture = _pDevice->newTexture(depthDesc);
+    depthDesc->release();
 }
 
-void GameCoordinator::buildDepthStencilStates()
+void GameCoordinator::buildDepthStencilStates( NS::UInteger width, NS::UInteger height )
 {
-//    MTL::DepthStencilDescriptor* pDsDesc = MTL::DepthStencilDescriptor::alloc()->init();
-//    pDsDesc->setDepthCompareFunction( MTL::CompareFunction::CompareFunctionLess );
-//    pDsDesc->setDepthWriteEnabled( false );
-//
-//    _gBufferPassDesc->depthAttachment()->setClearDepth( 1.0f );
-//    _gBufferPassDesc->depthAttachment()->setLevel(0);
-//    _gBufferPassDesc->depthAttachment()->setSlice(0);
-////    _gBufferPassDesc->depthAttachment()->setTexture( _shadowMap );
-//    _gBufferPassDesc->depthAttachment()->setLoadAction( MTL::LoadActionClear );
-//    _gBufferPassDesc->depthAttachment()->setStoreAction( MTL::StoreActionStore );
-//
-//    _gBufferPassDesc->colorAttachments()->object(0)->setLoadAction( MTL::LoadActionDontCare );
-//    _gBufferPassDesc->colorAttachments()->object(0)->setStoreAction( MTL::StoreActionStore );
-//    _gBufferPassDesc->colorAttachments()->object(1)->setLoadAction( MTL::LoadActionDontCare );
-//    _gBufferPassDesc->colorAttachments()->object(1)->setStoreAction( MTL::StoreActionStore );
-//    
-//    pDsDesc->setDepthCompareFunction( MTL::CompareFunctionLess );
-//    pDsDesc->setDepthWriteEnabled( true );
+    MTL::DepthStencilDescriptor* pDsDesc = MTL::DepthStencilDescriptor::alloc()->init();
+    MTL::DepthStencilDescriptor* pDsDescTriangle = MTL::DepthStencilDescriptor::alloc()->init();
+    pDsDesc->setDepthCompareFunction( MTL::CompareFunction::CompareFunctionAlways );
+    pDsDescTriangle->setDepthCompareFunction( MTL::CompareFunction::CompareFunctionLess );
+    pDsDesc->setDepthWriteEnabled( true );
+    pDsDescTriangle->setDepthWriteEnabled( true );
 
-//    _pDepthStencilStateJDLV = _pDevice->newDepthStencilState( pDsDesc );
-//    pDsDesc->release();
+    _pDepthStencilStateJDLV = _pDevice->newDepthStencilState( pDsDesc );
+    _pDepthStencilState = _pDevice->newDepthStencilState( pDsDescTriangle );
 
-//    _pDepthStencilState = _pDevice->newDepthStencilState( pDsDesc );
-//    pDsDesc->release();
-//    MTL::TextureDescriptor* depthDesc =
-//        MTL::TextureDescriptor::texture2DDescriptorWithPixelFormat(
-//            MTL::PixelFormatDepth32Float,
-//            (NSUInteger)_pViewportSize.x,
-//            (NSUInteger)_pViewportSize.y,
-//            false);
-//    depthDesc->setUsage(MTL::TextureUsageRenderTarget);
-//    depthDesc->setStorageMode(MTL::StorageModePrivate);
-//    _pDepthTexture = _pDevice->newTexture(depthDesc);
-//    depthDesc->release();
+    pDsDesc->release();
+    pDsDescTriangle->release();
+    MTL::TextureDescriptor* depthDesc =
+        MTL::TextureDescriptor::texture2DDescriptor(
+            MTL::PixelFormatDepth32Float,
+                                                    width,
+                                                    height,
+//                                        1024, 1024,
+//            (NS::UInteger)_pViewportSize.x,
+//            (NS::UInteger)_pViewportSize.y,
+            false );
+    depthDesc->setUsage( MTL::TextureUsageRenderTarget );
+    depthDesc->setStorageMode( MTL::StorageModePrivate );
+    _pTexture = _pDevice->newTexture(depthDesc);
+//    depthDesc->release(); // why crash?
 }
 
 void GameCoordinator::initGrid()
@@ -495,12 +502,16 @@ void GameCoordinator::draw( MTK::View* _pView )
     MTL::RenderPassColorAttachmentDescriptor* color0 = pRenderPassDescriptor->colorAttachments()->object(0);
     color0->setLoadAction( MTL::LoadActionClear );
     color0->setStoreAction( MTL::StoreActionStore );
-//    color0->setClearColor( MTL::ClearColor(0.1, 0.1, 0.1, 1.0) );
+    color0->setClearColor( MTL::ClearColor(0.1, 0.1, 0.1, 1.0) );
+    pRenderPassDescriptor->depthAttachment()->setTexture(_pTexture);
+    pRenderPassDescriptor->depthAttachment()->setClearDepth(1.0f);
+    pRenderPassDescriptor->depthAttachment()->setLoadAction(MTL::LoadActionClear);
+    pRenderPassDescriptor->depthAttachment()->setStoreAction(MTL::StoreActionStore);
 
     MTL4::RenderCommandEncoder* renderPassEncoder = _pCommandBuffer[0]->renderCommandEncoder(pRenderPassDescriptor);
     renderPassEncoder->setLabel(NS::String::string(label.c_str(), NS::ASCIIStringEncoding));
     renderPassEncoder->setRenderPipelineState(_pPSO);
-//    renderPassEncoder->setDepthStencilState( _pDepthStencilState );
+    renderPassEncoder->setDepthStencilState( _pDepthStencilState );
     renderPassEncoder->setViewport(viewPort);
 
     configureVertexDataForBuffer(_currentFrameIndex, _pTriangleDataBuffer[frameIndex]->contents());
@@ -542,6 +553,7 @@ void GameCoordinator::draw( MTK::View* _pView )
     computeEncoder->dispatchThreadgroups(threadgroups, threadgroupSize);
     computeEncoder->endEncoding();
 
+    color0->setLoadAction(MTL::LoadActionLoad);
     _pCommandBuffer[1]->endCommandBuffer();
     _pCommandBuffer[2] = _pDevice->newCommandBuffer();
     _pCommandBuffer[2]->beginCommandBuffer(_pCommandAllocator[frameIndex]);
@@ -549,7 +561,7 @@ void GameCoordinator::draw( MTK::View* _pView )
     MTL4::RenderCommandEncoder* gridRenderPassEncoder = _pCommandBuffer[2]->renderCommandEncoder(pRenderPassDescriptor);
 
     gridRenderPassEncoder->setRenderPipelineState(_pJDLVRenderPSO);
-//    gridRenderPassEncoder->setDepthStencilState( _pDepthStencilStateJDLV );
+    gridRenderPassEncoder->setDepthStencilState( _pDepthStencilStateJDLV );
     gridRenderPassEncoder->setViewport(viewPortJDLV);
 
     _pArgumentTableJDLV->setAddress(destGrid->gpuAddress(), 0);
@@ -572,5 +584,3 @@ void GameCoordinator::draw( MTK::View* _pView )
     currentDrawable->present();
     pPool->release();
 }
-
-
