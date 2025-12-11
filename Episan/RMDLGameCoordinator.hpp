@@ -19,6 +19,8 @@
 #include "RMDLCamera.hpp"
 #include "RMDLUtils.hpp"
 #include "RMDLFontLoader.h"
+#include "RMDLMeshUtils.hpp"
+#include "BumpAllocator.hpp"
 
 #define kMaxBuffersInFlight 3
 static const uint32_t NumLights = 256;
@@ -28,6 +30,19 @@ struct TriangleData
     VertexData vertex0;
     VertexData vertex1;
     VertexData vertex2;
+};
+
+struct UIRenderData
+{
+    std::array<std::unique_ptr<BumpAllocator>, kMaxBuffersInFlight> bufferAllocator;
+    std::array<NS::SharedPtr<MTL::Heap>, kMaxBuffersInFlight>       resourceHeaps;
+    std::array<NS::SharedPtr<MTL::Buffer>, kMaxBuffersInFlight>     frameDataBuf;
+    std::array<NS::SharedPtr<MTL::Buffer>, kMaxBuffersInFlight>     highScorePositionBuf;
+    std::array<NS::SharedPtr<MTL::Buffer>, kMaxBuffersInFlight>     currentScorePositionBuf;
+    NS::SharedPtr<MTL::Buffer>                                      textureTable;
+    NS::SharedPtr<MTL::Buffer>                                      samplerTable;
+    NS::SharedPtr<MTL::SamplerState>                                pSampler;
+    NS::SharedPtr<MTL::ResidencySet>                                pResidencySet;
 };
 
 class GameCoordinator
@@ -116,6 +131,12 @@ private:
     int                                 _frameNumber;
     NS::SharedPtr<MTL::SharedEvent>     _pPacingEvent;
     FontAtlas font;
+    MTL::Buffer*                        _pTextDataBuffer[kMaxBuffersInFlight];
+
+    IndexedMesh                         _timeMesh;
+    IndexedMesh                         _currentScoreMesh;
+    simd::float4                        _timePosition;
+    simd::float4                        _currentScorePosition;
 
     MTL::Buffer* _pJDLVStateBuffer[kMaxBuffersInFlight];
     MTL::Buffer* _pGridBuffer_A[kMaxBuffersInFlight];

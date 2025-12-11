@@ -197,8 +197,20 @@ GameCoordinator::GameCoordinator(MTL::Device* pDevice,
         _pTextBuffer[i] = _pDevice->newBuffer(sizeof(TextVertex), MTL::ResourceStorageModeShared);
         //    auto vbuf = _pDevice->newBuffer(textVertices.data(), textVertices.size() * sizeof(TextVertex),
         //    ft_memcpy(_pTextVertexBuffer->contents(), textVertices.data(), textVertices.size() * sizeof(TextVertex));
+        
+        
     }
     font = newFontAtlas(_pDevice);
+
+    ft_memset(&_timeMesh, 0x0, sizeof(IndexedMesh));
+    ft_memset(&_currentScoreMesh, 0x0, sizeof(IndexedMesh));
+
+    const uint64_t kScratchSize = 1024;
+    auto pHeapDesc = NS::TransferPtr( MTL::HeapDescriptor::alloc()->init() );
+    pHeapDesc->setSize(sizeof(RMDLUniforms::cameraUniforms.projectionMatrix) + 2 * sizeof(simd::float4));
+    pHeapDesc->setStorageMode(MTL::StorageModeShared);
+
+
     initGrid();
     buildJDLVPipelines();
     buildDepthStencilStates( width, height );
@@ -243,6 +255,8 @@ GameCoordinator::~GameCoordinator()
     _pPSO->release();
     _pShaderLibrary->release();
 //    _pCommandBuffer->release();
+    mesh_utils::releaseMesh(&_currentScoreMesh);
+    mesh_utils::releaseMesh(&_timeMesh);
     _pCommandQueue->release();
     _pResidencySet->release();
     _pArgumentTable->release();
@@ -373,8 +387,8 @@ void GameCoordinator::createTextPipeline()
     _pTextPSO = compiler->newRenderPipelineState(renderDescriptor.get(), nullptr, &pError);
 
     NS::SharedPtr<MTL4::ArgumentTableDescriptor> computeArgumentTable = NS::TransferPtr( MTL4::ArgumentTableDescriptor::alloc()->init() );
-    computeArgumentTable->setMaxBufferBindCount(2);
-//    computeArgumentTable->setMaxTextureBindCount(1);
+    computeArgumentTable->setMaxBufferBindCount(1);
+    computeArgumentTable->setMaxTextureBindCount(1);
     computeArgumentTable->setLabel( NS::String::string( "text argument table descriptor", NS::ASCIIStringEncoding ) );
 
     _pArgumentTableText = _pDevice->newArgumentTable(computeArgumentTable.get(), &pError);
@@ -390,6 +404,7 @@ void GameCoordinator::createTextPipeline()
         _pResidencySet->addAllocation(_pTextBuffer[i]);
     }
 //    _pResidencySet->addAllocation(_pFontTexture);
+    _pResidencySet->addAllocation(font.texture.get());
 
     _pResidencySet->commit();
 
@@ -682,19 +697,19 @@ void GameCoordinator::draw( MTK::View* _pView )
 
     _useBufferAAsSource = !_useBufferAAsSource;
 
-//    _pCommandBuffer[3] = _pDevice->newCommandBuffer();
-//    _pCommandBuffer[3]->beginCommandBuffer(_pCommandAllocator[frameIndex]);
-//
-//    color0->setLoadAction(MTL::LoadActionLoad);
-//    pRenderPassDescriptor->depthAttachment()->setLoadAction(MTL::LoadActionLoad);
-//
-//    MTL4::RenderCommandEncoder* textRenderPassEncoder = _pCommandBuffer[3]->renderCommandEncoder(pRenderPassDescriptor);
-//    textRenderPassEncoder->setRenderPipelineState(_pTextPSO);
-//    textRenderPassEncoder->setViewport(viewPort);
+    _pCommandBuffer[3] = _pDevice->newCommandBuffer();
+    _pCommandBuffer[3]->beginCommandBuffer(_pCommandAllocator[frameIndex]);
+
+    color0->setLoadAction(MTL::LoadActionLoad);
+    pRenderPassDescriptor->depthAttachment()->setLoadAction(MTL::LoadActionLoad);
+
+    MTL4::RenderCommandEncoder* textRenderPassEncoder = _pCommandBuffer[3]->renderCommandEncoder(pRenderPassDescriptor);
+    textRenderPassEncoder->setRenderPipelineState(_pTextPSO);
+    textRenderPassEncoder->setViewport(viewPort);
 
     std::vector<TextVertex> textVerts;
 
-    buildTextVertices("SCORE: 0",
+    buildTextVertices("SCORE : 00000000",
                           font,
                           -0.95f,
                           0.85f,
@@ -706,19 +721,20 @@ void GameCoordinator::draw( MTK::View* _pView )
             textVerts.size() * sizeof(TextVertex),
             MTL::ResourceStorageModeShared
         );
-//    _pArgumentTableText->setAddress(textVertexBuffer->gpuAddress(), 0);
+    _pArgumentTableText->setAddress(textVertexBuffer->gpuAddress(), 0);
+    _pArgumentTableText->setTexture(font.texture->gpuResourceID(), 0);
 //    _pArgumentTableText->setTexture(_pFontTexture->gpuResourceID(), 0);
-//
-//    textRenderPassEncoder->setArgumentTable( _pArgumentTableText, MTL::RenderStageVertex );
-//    textRenderPassEncoder->setArgumentTable( _pArgumentTableText, MTL::RenderStageFragment );
-//
-//    textRenderPassEncoder->drawPrimitives(MTL::PrimitiveTypeTriangle, NS::UInteger(0), NS::UInteger(textVerts.size()));
-//    textRenderPassEncoder->endEncoding();
-//    _pCommandBuffer[3]->endCommandBuffer();
+
+    textRenderPassEncoder->setArgumentTable( _pArgumentTableText, MTL::RenderStageVertex );
+    textRenderPassEncoder->setArgumentTable( _pArgumentTableText, MTL::RenderStageFragment );
+
+    textRenderPassEncoder->drawPrimitives(MTL::PrimitiveTypeTriangle, NS::UInteger(0), NS::UInteger(textVerts.size()));
+    textRenderPassEncoder->endEncoding();
+    _pCommandBuffer[3]->endCommandBuffer();
 
     CA::MetalDrawable* currentDrawable = _pView->currentDrawable();
     _pCommandQueue->wait(currentDrawable);
-    _pCommandQueue->commit(_pCommandBuffer, 3);
+    _pCommandQueue->commit(_pCommandBuffer, 4);
     _pCommandQueue->signalDrawable(currentDrawable);
     _pCommandQueue->signalEvent(_sharedEvent, _currentFrameIndex);
     currentDrawable->present();
