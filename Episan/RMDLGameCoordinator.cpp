@@ -56,6 +56,66 @@ enum BufferIndexJDLV
     BufferIndexTriangle = 4
 };
 
+// Version améliorée de buildTextVertices avec support de viewport
+void buildTextVerticesC(const std::string& text,
+                       const FontAtlas& font,
+                       float x, float y,
+                       float size,
+                       std::vector<TextVertex>& out)
+{
+    out.clear();
+    
+    float cursor = x;
+    
+    for (char c : text)
+    {
+        // Vérifier si le caractère est dans la plage supportée
+        if (c < g_chars[0] || c > g_chars[kNumCharacters - 1])
+        {
+            cursor += size; // Avancer quand même pour l'espace
+            continue;
+        }
+        
+        // Trouver l'index du caractère
+        int charIndex = -1;
+        for (size_t i = 0; i < kNumCharacters; i++)
+        {
+            if (g_chars[i] == c)
+            {
+                charIndex = (int)i;
+                break;
+            }
+        }
+        
+        if (charIndex == -1)
+        {
+            cursor += size;
+            continue;
+        }
+        
+        auto& uv = font.charToUVs[charIndex];
+        
+        float w = size;
+        float h = size;
+        
+        // Créer un quad (2 triangles) pour le caractère
+        TextVertex quad[6] = {
+            // Triangle 1
+            {{cursor,     y},     uv.sw},  // Bottom-left
+            {{cursor + w, y},     uv.se},  // Bottom-right
+            {{cursor + w, y + h}, uv.ne},  // Top-right
+            
+            // Triangle 2
+            {{cursor,     y},     uv.sw},  // Bottom-left
+            {{cursor + w, y + h}, uv.ne},  // Top-right
+            {{cursor,     y + h}, uv.nw}   // Top-left
+        };
+        
+        out.insert(out.end(), std::begin(quad), std::end(quad));
+        cursor += w;
+    }
+}
+
 void buildTextVertices(const std::string& text,
                        const FontAtlas& font,
                        float x, float y,
@@ -91,7 +151,6 @@ void buildTextVertices(const std::string& text,
         cursor += w;
     }
 }
-
 
 void triangleRedGreenBlue(float radius, float rotationInDegrees, TriangleData *triangleData)
 {
@@ -178,6 +237,7 @@ GameCoordinator::GameCoordinator(MTL::Device* pDevice,
     _pShaderLibrary = _pDevice->newDefaultLibrary(); // MTL::Library* MTL::Device::newDefaultLibrary(const NS::Bundle*, NS::Error**)
 
     size_t gridSize = kGridWidth * kGridHeight * sizeof(uint32_t);
+
     for (uint8_t i = 0; i < kMaxFramesInFlight; i++)
     {
         _pTriangleDataBuffer[i] = _pDevice->newBuffer( sizeof(TriangleData), MTL::ResourceStorageModeShared );
@@ -197,19 +257,9 @@ GameCoordinator::GameCoordinator(MTL::Device* pDevice,
         _pTextBuffer[i] = _pDevice->newBuffer(sizeof(TextVertex), MTL::ResourceStorageModeShared);
         //    auto vbuf = _pDevice->newBuffer(textVertices.data(), textVertices.size() * sizeof(TextVertex),
         //    ft_memcpy(_pTextVertexBuffer->contents(), textVertices.data(), textVertices.size() * sizeof(TextVertex));
-        
-        
     }
     font = newFontAtlas(_pDevice);
-
-    ft_memset(&_timeMesh, 0x0, sizeof(IndexedMesh));
-    ft_memset(&_currentScoreMesh, 0x0, sizeof(IndexedMesh));
-
-    const uint64_t kScratchSize = 1024;
-    auto pHeapDesc = NS::TransferPtr( MTL::HeapDescriptor::alloc()->init() );
-    pHeapDesc->setSize(sizeof(RMDLUniforms::cameraUniforms.projectionMatrix) + 2 * sizeof(simd::float4));
-    pHeapDesc->setStorageMode(MTL::StorageModeShared);
-
+    _textureAssets["fontAtlas"] = font.texture;
 
     initGrid();
     buildJDLVPipelines();
@@ -367,12 +417,12 @@ void GameCoordinator::createTextPipeline()
     renderDescriptor->colorAttachments()->object(0)->setPixelFormat( MTL::PixelFormatRGBA16Float );
 
     NS::SharedPtr<MTL4::LibraryFunctionDescriptor> vertexFunction = NS::TransferPtr( MTL4::LibraryFunctionDescriptor::alloc()->init() );
-    vertexFunction->setName(MTLSTR("textVS"));
+    vertexFunction->setName(MTLSTR("textVSc"));
     vertexFunction->setLibrary(_pShaderLibrary);
     renderDescriptor->setVertexFunctionDescriptor(vertexFunction.get());
 
     NS::SharedPtr<MTL4::LibraryFunctionDescriptor> fragmentFunction = NS::TransferPtr( MTL4::LibraryFunctionDescriptor::alloc()->init() );
-    fragmentFunction->setName(MTLSTR("textFS"));
+    fragmentFunction->setName(MTLSTR("textFSc"));
     fragmentFunction->setLibrary(_pShaderLibrary);
     renderDescriptor->setFragmentFunctionDescriptor(fragmentFunction.get());
 
@@ -707,9 +757,10 @@ void GameCoordinator::draw( MTK::View* _pView )
     textRenderPassEncoder->setRenderPipelineState(_pTextPSO);
     textRenderPassEncoder->setViewport(viewPort);
 
+    
     std::vector<TextVertex> textVerts;
 
-    buildTextVertices("SCORE : 00000000",
+    buildTextVerticesC("SCORE : 00000000",
                           font,
                           -0.95f,
                           0.85f,
@@ -728,13 +779,13 @@ void GameCoordinator::draw( MTK::View* _pView )
     textRenderPassEncoder->setArgumentTable( _pArgumentTableText, MTL::RenderStageVertex );
     textRenderPassEncoder->setArgumentTable( _pArgumentTableText, MTL::RenderStageFragment );
 
-    textRenderPassEncoder->drawPrimitives(MTL::PrimitiveTypeTriangle, NS::UInteger(0), NS::UInteger(textVerts.size()));
+    textRenderPassEncoder->drawPrimitives( MTL::PrimitiveTypeTriangle, NS::UInteger(0), NS::UInteger(textVerts.size()) );
     textRenderPassEncoder->endEncoding();
     _pCommandBuffer[3]->endCommandBuffer();
 
     CA::MetalDrawable* currentDrawable = _pView->currentDrawable();
     _pCommandQueue->wait(currentDrawable);
-    _pCommandQueue->commit(_pCommandBuffer, 4);
+    _pCommandQueue->commit(_pCommandBuffer, 3);
     _pCommandQueue->signalDrawable(currentDrawable);
     _pCommandQueue->signalEvent(_sharedEvent, _currentFrameIndex);
     currentDrawable->present();

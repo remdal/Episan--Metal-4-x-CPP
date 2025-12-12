@@ -96,7 +96,7 @@ FontAtlas newFontAtlas(MTL::Device* pDevice)
     const uint32_t bytesPerRow = bitmapW * bitmapChannels;
     
     uint8_t* bitmap = new uint8_t[bitmapSize];
-    memset(bitmap, 0x0, bitmapSize);
+    ft_memset(bitmap, 0x0, bitmapSize);
     
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     CGContextRef ctx = CGBitmapContextCreate(bitmap,
@@ -208,30 +208,26 @@ FontAtlas newFontAtlas(MTL::Device* pDevice)
         CFRelease(color);
     }
     
-    // Create a Metal texture with the font atlas
-    
-    auto pTextureDesc = NS::TransferPtr(MTL::TextureDescriptor::alloc()->init());
+    auto pTextureDesc = NS::TransferPtr( MTL::TextureDescriptor::alloc()->init() );
     pTextureDesc->setWidth(bitmapW);
     pTextureDesc->setHeight(bitmapH);
-    pTextureDesc->setTextureType(MTL::TextureType2DArray);
-    pTextureDesc->setUsage(MTL::TextureUsageShaderRead);
+    pTextureDesc->setTextureType( MTL::TextureType2DArray );
+    pTextureDesc->setUsage( MTL::TextureUsageShaderRead );
     pTextureDesc->setArrayLength(1);
-    pTextureDesc->setStorageMode(MTL::StorageModeShared);
+    pTextureDesc->setStorageMode( MTL::StorageModeShared );
     pTextureDesc->setMipmapLevelCount(1);
     
     fontAtlas.texture = NS::TransferPtr(pDevice->newTexture(pTextureDesc.get()));
     fontAtlas.texture->setLabel(MTLSTR("Font Atlas Texture"));
-    fontAtlas.texture->replaceRegion(MTL::Region(0, 0, bitmapW, bitmapH), 0, 0,
-                                       bitmap, bytesPerRow, bitmapW * bitmapH * bitmapChannels);
-    
-    // Release Core Graphics and Core Text objects
+    fontAtlas.texture->replaceRegion( MTL::Region(0, 0, bitmapW, bitmapH), 0, 0, bitmap, bytesPerRow, bitmapW * bitmapH * bitmapChannels );
+
     CFRelease(color);
     CFRelease(font);
     CFRelease(ctx);
     CFRelease(colorSpace);
     delete [] bitmap;
-    
-    return fontAtlas;
+
+    return (fontAtlas);
 }
 
 FiraCode newFiraCode( MTL::Device* pDevice )
@@ -331,6 +327,46 @@ FiraCode newFiraCode( MTL::Device* pDevice )
     CFRelease(colorSpace);
     delete [] bitmap;
     return (firaCode);
+}
+
+
+
+CGRect calculateReferenceBoundsC(char refChar,
+                                CTFontRef font,
+                                CGColorRef color,
+                                CGContextRef ctx)
+{
+    NSString* str = [NSString stringWithFormat:@"%c", refChar];
+    NSMutableAttributedString* attributedString =
+        [[NSMutableAttributedString alloc] initWithString:str];
+    
+    [attributedString addAttribute:NSFontAttributeName
+                            value:(__bridge id)font
+                            range:NSMakeRange(0, 1)];
+    
+    [attributedString addAttribute:NSForegroundColorAttributeName
+                            value:(__bridge id)color
+                            range:NSMakeRange(0, 1)];
+    
+    CTLineRef lineOfText = CTLineCreateWithAttributedString(
+        (__bridge CFAttributedStringRef)attributedString);
+    
+    CGContextSetTextPosition(ctx, 0, 0);
+    CGRect bounds = CTLineGetImageBounds(lineOfText, ctx);
+    
+    CFRelease(lineOfText);
+    [attributedString release];
+    
+    return bounds;
+}
+
+// Fonction utilitaire pour convertir des coordonnées écran en NDC
+inline simd::float2 screenToNDC(float x, float y, float screenWidth, float screenHeight)
+{
+    return simd_make_float2(
+        (x / screenWidth) * 2.0f - 1.0f,
+        1.0f - (y / screenHeight) * 2.0f
+    );
 }
 
 /* Cube: 36 indices.

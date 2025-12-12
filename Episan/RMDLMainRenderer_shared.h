@@ -121,6 +121,12 @@ struct TextVertex
     simd::float2 uv;
 };
 
+struct TextVertexC
+{
+    simd::float2 position;  // Position en NDC (-1 à 1)
+    simd::float2 texCoord;  // Coordonnées UV dans l'atlas
+};
+
 
 #endif /* RMDLMAINRENDERER_SHARED_H */
 
