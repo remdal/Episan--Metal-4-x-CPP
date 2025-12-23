@@ -249,8 +249,10 @@
     if (_pGameCoordinator) _pGameCoordinator->draw((__bridge MTK::View *)view);
 }
 
-- (void)mtkView:(nonnull MTKView *)view drawableSizeWillChange:(CGSize)size {
-    
+- (void)mtkView:(nonnull MTKView *)view drawableSizeWillChange:(CGSize)size
+{
+//    _pGameCoordinator->resizeMtkView((__bridge NS::UInteger *)(NS::UInteger)size.width, (__bridge NS::UInteger *)(NS::UInteger)size.height);
+    _pGameCoordinator->resizeMtkView((NS::UInteger)size.width, (NS::UInteger)size.height);
 }
 
 //- (BOOL)commitEditingAndReturnError:(NSError *__autoreleasing  _Nullable * _Nullable)error { 

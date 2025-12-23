@@ -317,17 +317,17 @@ GameCoordinator::~GameCoordinator()
     _pDevice->release();
 }
 
+void GameCoordinator::updateViewportSize(NS::UInteger width, NS::UInteger height)
+{
+    _pViewportSize.x = (float)width;
+    _pViewportSize.y = (float)height;
+    ft_memcpy(_pViewportSizeBuffer->contents(), &_pViewportSize, sizeof(_pViewportSize));
+}
+
 void GameCoordinator::resizeMtkView( NS::UInteger width, NS::UInteger height )
 {
-    const NS::UInteger nativeWidth = (NS::UInteger)(width/1.2);
-    const NS::UInteger nativeHeight = (NS::UInteger)(height/1.2);
-    _pViewportSize.x = (float)nativeWidth;
-    _pViewportSize.y = (float)nativeHeight;
-
-    _pViewportSizeBuffer = _pDevice->newBuffer(sizeof(_pViewportSize), MTL::ResourceStorageModeShared);
-    ft_memcpy(_pViewportSizeBuffer->contents(), &_pViewportSize, sizeof(_pViewportSize));
-    MTL::TextureDescriptor* depthDesc =
-        MTL::TextureDescriptor::texture2DDescriptor(
+    updateViewportSize(width, height);
+    MTL::TextureDescriptor* depthDesc = MTL::TextureDescriptor::texture2DDescriptor(
             MTL::PixelFormatDepth32Float,
             width,
             height,
@@ -335,7 +335,7 @@ void GameCoordinator::resizeMtkView( NS::UInteger width, NS::UInteger height )
     depthDesc->setUsage( MTL::TextureUsageRenderTarget );
     depthDesc->setStorageMode( MTL::StorageModePrivate );
     _pTexture = _pDevice->newTexture(depthDesc);
-    depthDesc->release();
+//    depthDesc->release();
 }
 
 void GameCoordinator::buildDepthStencilStates( NS::UInteger width, NS::UInteger height )
@@ -426,7 +426,6 @@ void GameCoordinator::createTextPipeline()
     fragmentFunction->setLibrary(_pShaderLibrary);
     renderDescriptor->setFragmentFunctionDescriptor(fragmentFunction.get());
 
-    renderDescriptor->colorAttachments()->object(0)->setPixelFormat(MTL::PixelFormatBGRA8Unorm);
     renderDescriptor->colorAttachments()->object(0)->setBlendingState(MTL4::BlendStateEnabled);
     renderDescriptor->colorAttachments()->object(0)->setRgbBlendOperation(MTL::BlendOperationAdd);
     renderDescriptor->colorAttachments()->object(0)->setAlphaBlendOperation(MTL::BlendOperationAdd);
@@ -644,7 +643,6 @@ void GameCoordinator::draw( MTK::View* _pView )
         _sharedEvent->waitUntilSignaledValue(timeStampToWait, DISPATCH_TIME_FOREVER);
     }
 
-    MTL::Viewport viewPort;
     viewPort.originX = 0.0;
     viewPort.originY = 0.0;
     viewPort.znear = 0.0;
@@ -733,7 +731,7 @@ void GameCoordinator::draw( MTK::View* _pView )
 
     gridRenderPassEncoder->setRenderPipelineState(_pJDLVRenderPSO);
     gridRenderPassEncoder->setDepthStencilState( _pDepthStencilStateJDLV );
-    gridRenderPassEncoder->setViewport(viewPortJDLV);
+    gridRenderPassEncoder->setViewport(viewPort);
 
     _pArgumentTableJDLV->setAddress(destGrid->gpuAddress(), 0);
     _pArgumentTableJDLV->setAddress(_pJDLVStateBuffer[frameIndex]->gpuAddress(), 1);
@@ -783,7 +781,7 @@ void GameCoordinator::draw( MTK::View* _pView )
     textRenderPassEncoder->endEncoding();
     _pCommandBuffer[3]->endCommandBuffer();
 
-    CA::MetalDrawable* currentDrawable = _pView->currentDrawable();
+    currentDrawable = _pView->currentDrawable();
     _pCommandQueue->wait(currentDrawable);
     _pCommandQueue->commit(_pCommandBuffer, 3);
     _pCommandQueue->signalDrawable(currentDrawable);

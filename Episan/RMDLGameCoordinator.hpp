@@ -94,6 +94,8 @@ public:
     void makeResidencySet();
     void compileRenderPipeline( MTL::PixelFormat );
 
+    void updateViewportSize(NS::UInteger, NS::UInteger);
+
 private:
     MTL::PixelFormat                    _pPixelFormat;
     MTL4::CommandQueue*                 _pCommandQueue;
@@ -119,6 +121,8 @@ private:
     int                                 _frameNumber;
     NS::SharedPtr<MTL::SharedEvent>     _pPacingEvent;
     FontAtlas font;
+    MTL::Viewport viewPort;
+    CA::MetalDrawable* currentDrawable;
     std::unordered_map<std::string, NS::SharedPtr<MTL::Texture>> _textureAssets;
 
     MTL::Buffer*                        _pTextDataBuffer[kMaxBuffersInFlight];
@@ -146,36 +150,20 @@ private:
     void buildJDLVPipelines();
 
 //    simd::float4x4                      _presentOrtho;
-//    MTL::Buffer*                        _pUniformBuffer;
 //    NS::SharedPtr<MTL::Texture>         _pBackbuffer;
 //    NS::SharedPtr<MTL::Texture>         _pUpscaledbuffer;
 //    NS::SharedPtr<MTL::Texture>         _pBackbufferAdapter;
 //    NS::SharedPtr<MTL::Texture>         _pUpscaledbufferAdapter;
 //    int            _highScore;
-//    int            _prevScore;
     float          _maxEDRValue;
     float          _brightness;
     float          _edrBias;
 //    uint64_t                            _pacingTimeStampIndex;
 //    MTL::SamplerState*                  _pSampler;
-//    std::unordered_map<std::string, NS::SharedPtr<MTL::Texture>> _textureAssets;
-//    MTL::RenderPipelineState*           _pPresentPipeline;
-//    MTL::RenderPipelineState*           _pInstancedSpritePipeline;
 //    NS::SharedPtr<MTLFX::SpatialScaler> _pSpatialScaler;
-//    MTL::PixelFormat                    _layerPixelFormat;
-//    MTL::RenderPipelineState*           _pMapPSO;
-//    MTL::RenderPipelineState*           _pCameraPSO;
-//    MTL::ComputePipelineState*          _pComputePSO;
-//    MTL::Buffer*                        _pVertexDataBuffer;
-    //MTL::Buffer*                _pCameraDataBuffer[kMaxFramesInFlight];
-//    MTL::Buffer*                _pIndexBuffer;
-//    MTL::Buffer*                _pTextureAnimationBuffer;
 //    float                       _angle;
-//    int                         _frameP;
 //    uint                        _animationIndex;
 //    NS::SharedPtr<MTL::Texture>         _pUpscaledbufferAdapterP;
-//    MTL::Buffer* _pVertexDataBufferMap;
-//    MTL::Buffer* _pIndexBufferMap;
 };
 
 #endif /* RMDLGAMECOORDINATOR_HPP */
